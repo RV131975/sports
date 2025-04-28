@@ -1,228 +1,64 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <title>Resultados de Futebol</title>
-  <style>
-    :root {
-      --bg-color: #ffffff;
-      --text-color: #111111;
-      --card-bg: #f9f9f9;
-      --border-color: #cccccc;
-    }
+import { useEffect, useState } from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import axios from "axios"
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-color: #121212;
-        --text-color: #eeeeee;
-        --card-bg: #1e1e1e;
-        --border-color: #333333;
-      }
-    }
+export default function ResultadosFutebol() {
+  const [data, setData] = useState("")
+  const [jogos, setJogos] = useState([])
+  const [carregando, setCarregando] = useState(false)
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-      transition: background-color 0.3s, color 0.3s;
-    }
+  const hoje = new Date().toISOString().split("T")[0]
 
-    h1 {
-      font-size: 2em;
-      margin-bottom: 20px;
-    }
-
-    input[type="date"],
-    input[type="text"] {
-      padding: 8px;
-      border-radius: 5px;
-      border: 1px solid var(--border-color);
-      background-color: var(--card-bg);
-      color: var(--text-color);
-      margin-bottom: 10px;
-      width: 100%;
-    }
-
-    button {
-      padding: 8px 16px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      background-color: #007BFF;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      width: 100%;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    .jogo, .card-json {
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: var(--card-bg);
-      transition: background-color 0.3s, border-color 0.3s;
-    }
-
-    .jogo h3, .card-json h4 {
-      margin: 0 0 8px;
-      font-size: 1.2em;
-    }
-
-    .status, .card-json p {
-      font-size: 0.95em;
-      color: var(--text-color);
-    }
-
-    pre {
-      background-color: var(--bg-color);
-      padding: 10px;
-      border-radius: 8px;
-      overflow-x: auto;
-      color: var(--text-color);
-      font-size: 0.9em;
-    }
-
-    .cards-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .filtros {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-  </style>
-</head>
-<body>
-  <h1>Resultados de Futebol</h1>
-
-  <div class="filtros">
-    <input type="date" id="data" />
-    <input type="text" id="liga" placeholder="Buscar por Liga ou Campeonato (opcional)" />
-    <input type="text" id="equipe" placeholder="Buscar por Equipe (opcional)" />
-    <button onclick="buscarResultados()">Buscar</button>
-  </div>
-
-  <div id="resultados"></div>
-
-  <script>
-    const API_KEY = "af66e9e274b3b922fa0dfb97eb4a5767"; // Sua chave já inserida
-    const BASE_URL_FIXTURES = "https://v3.football.api-sports.io/fixtures";
-    const BASE_URL_TEAMS = "https://v3.football.api-sports.io/teams";
-
-    const exemploJson = {
-      "obter": "classificação%C3%A7%C3%A3o",
-      "parâmetros": [],
-      "erros": {
-        "endpoint": "O endpoint Classifica%C3%A7%C3%A3o não existe."
-      },
-      "resultados": 0,
-      "paginação": {
-        "atual": 1,
-        "total": 1
-      },
-      "resposta": []
-    };
-
-    document.getElementById("data").valueAsDate = new Date();
-
-    async function buscarResultados() {
-      const dataSelecionada = document.getElementById("data").value;
-      const liga = document.getElementById("liga").value.trim();
-      const equipe = document.getElementById("equipe").value.trim();
-      const resultados = document.getElementById("resultados");
-
-      resultados.innerHTML = "<p>Carregando...</p>";
-
-      try {
-        let url = BASE_URL_FIXTURES;
-        let params = `?timezone=America/Sao_Paulo`;
-
-        if (equipe) {
-          // Buscar pela equipe
-          const buscaTime = await fetch(`${BASE_URL_TEAMS}?search=${equipe}`, {
-            headers: { "x-apisports-key": API_KEY }
-          });
-          const dadosTime = await buscaTime.json();
-          if (dadosTime.response.length > 0) {
-            const teamId = dadosTime.response[0].team.id;
-            params += `&team=${teamId}`;
-          } else {
-            resultados.innerHTML = `<p>Equipe não encontrada.</p>`;
-            return;
-          }
-        } else {
-          if (liga) {
-            params += `&league=${liga}`; // Aqui poderia ser por ID da liga
-          }
-          if (dataSelecionada) {
-            params += `&date=${dataSelecionada}`;
-          }
+  const buscarResultados = async (dataSelecionada) => {
+    setCarregando(true)
+    try {
+      const response = await axios.get("https://v3.football.api-sports.io/fixtures", {
+        headers: { "x-apisports-key": "SUA_CHAVE_API" },
+        params: {
+          date: dataSelecionada,
+          timezone: "America/Sao_Paulo"
         }
-
-        const response = await fetch(`${url}${params}`, {
-          headers: { "x-apisports-key": API_KEY }
-        });
-        const dataJson = await response.json();
-
-        resultados.innerHTML = "";
-        if (dataJson.response.length === 0) {
-          resultados.innerHTML = "<p>Nenhum jogo encontrado.</p>";
-          exibirJsonComoCards(exemploJson);
-          return;
-        }
-
-        dataJson.response.forEach(jogo => {
-          const div = document.createElement("div");
-          div.className = "jogo";
-          div.innerHTML = `
-            <h3>${jogo.teams.home.name} ${jogo.goals.home} x ${jogo.goals.away} ${jogo.teams.away.name}</h3>
-            <div class="status">Status: ${jogo.fixture.status.long} (${jogo.fixture.status.short})</div>
-          `;
-          resultados.appendChild(div);
-        });
-      } catch (error) {
-        resultados.innerHTML = "<p>Erro ao buscar os resultados.</p>";
-        exibirJsonComoCards(exemploJson);
-        console.error(error);
-      }
+      })
+      setJogos(response.data.response)
+    } catch (error) {
+      console.error("Erro ao buscar jogos:", error)
+    } finally {
+      setCarregando(false)
     }
+  }
 
-    function exibirJsonComoCards(json) {
-      const container = document.createElement("div");
-      container.className = "cards-container";
+  useEffect(() => {
+    setData(hoje)
+    buscarResultados(hoje)
+  }, [])
 
-      for (const chave in json) {
-        const card = document.createElement("div");
-        card.className = "card-json";
-
-        let conteudo = "";
-
-        if (typeof json[chave] === "object") {
-          conteudo = `<pre>${JSON.stringify(json[chave], null, 2)}</pre>`;
-        } else {
-          conteudo = `<p>${json[chave]}</p>`;
-        }
-
-        card.innerHTML = `<h4>${chave.charAt(0).toUpperCase() + chave.slice(1)}:</h4>${conteudo}`;
-        container.appendChild(card);
-      }
-
-      document.getElementById("resultados").appendChild(container);
-    }
-
-    buscarResultados();
-  </script>
-</body>
-</html>
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Resultados de Futebol</h1>
+      <div className="flex gap-2 mb-4">
+        <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+        <Button onClick={() => buscarResultados(data)}>Buscar</Button>
+      </div>
+      {carregando ? (
+        <p>Carregando...</p>
+      ) : (
+        <div className="grid gap-4">
+          {jogos.map((jogo, idx) => (
+            <Card key={idx}>
+              <CardContent className="p-4">
+                <div className="font-semibold">
+                  {jogo.teams.home.name} {jogo.goals.home} x {jogo.goals.away} {jogo.teams.away.name}
+                </div>
+                <div className="text-sm text-gray-500">
+                  Status: {jogo.fixture.status.long} ({jogo.fixture.status.short})
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
