@@ -15,7 +15,7 @@ export default function ResultadosFutebol() {
     setCarregando(true)
     try {
       const response = await axios.get("https://v3.football.api-sports.io/fixtures", {
-        headers: { "x-apisports-key": "SUA_CHAVE_API" },
+        headers: { "x-apisports-key": "af66e9e274b3b922fa0dfb97eb4a5767" },
         params: {
           date: dataSelecionada,
           timezone: "America/Sao_Paulo"
