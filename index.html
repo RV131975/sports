@@ -35,23 +35,27 @@
       margin-bottom: 20px;
     }
 
-    input[type=\"date\"] {
+    input[type="date"],
+    input[type="text"] {
       padding: 8px;
       border-radius: 5px;
       border: 1px solid var(--border-color);
       background-color: var(--card-bg);
       color: var(--text-color);
+      margin-bottom: 10px;
+      width: 100%;
     }
 
     button {
       padding: 8px 16px;
-      margin-left: 10px;
+      margin-top: 10px;
       border: none;
       border-radius: 5px;
       background-color: #007BFF;
       color: white;
       cursor: pointer;
       transition: background-color 0.2s;
+      width: 100%;
     }
 
     button:hover {
@@ -91,17 +95,31 @@
       flex-direction: column;
       gap: 10px;
     }
+
+    .filtros {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>Resultados de Futebol - Hoje</h1>
-  <input type="date" id="data" />
-  <button onclick="buscarResultados()">Buscar</button>
+  <h1>Resultados de Futebol</h1>
+
+  <div class="filtros">
+    <input type="date" id="data" />
+    <input type="text" id="liga" placeholder="Buscar por Liga ou Campeonato (opcional)" />
+    <input type="text" id="equipe" placeholder="Buscar por Equipe (opcional)" />
+    <button onclick="buscarResultados()">Buscar</button>
+  </div>
+
   <div id="resultados"></div>
 
   <script>
-    const API_KEY = "af66e9e274b3b922fa0dfb97eb4a5767"; // Substitua aqui pela sua chave da API
-    const BASE_URL = "https://v3.football.api-sports.io/fixtures";
+    const API_KEY = "af66e9e274b3b922fa0dfb97eb4a5767"; // Sua chave já inserida
+    const BASE_URL_FIXTURES = "https://v3.football.api-sports.io/fixtures";
+    const BASE_URL_TEAMS = "https://v3.football.api-sports.io/teams";
 
     const exemploJson = {
       "obter": "classificação%C3%A7%C3%A3o",
@@ -121,11 +139,39 @@
 
     async function buscarResultados() {
       const dataSelecionada = document.getElementById("data").value;
+      const liga = document.getElementById("liga").value.trim();
+      const equipe = document.getElementById("equipe").value.trim();
       const resultados = document.getElementById("resultados");
+
       resultados.innerHTML = "<p>Carregando...</p>";
 
       try {
-        const response = await fetch(`${BASE_URL}?date=${dataSelecionada}&timezone=America/Sao_Paulo`, {
+        let url = BASE_URL_FIXTURES;
+        let params = `?timezone=America/Sao_Paulo`;
+
+        if (equipe) {
+          // Buscar pela equipe
+          const buscaTime = await fetch(`${BASE_URL_TEAMS}?search=${equipe}`, {
+            headers: { "x-apisports-key": API_KEY }
+          });
+          const dadosTime = await buscaTime.json();
+          if (dadosTime.response.length > 0) {
+            const teamId = dadosTime.response[0].team.id;
+            params += `&team=${teamId}`;
+          } else {
+            resultados.innerHTML = `<p>Equipe não encontrada.</p>`;
+            return;
+          }
+        } else {
+          if (liga) {
+            params += `&league=${liga}`; // Aqui poderia ser por ID da liga
+          }
+          if (dataSelecionada) {
+            params += `&date=${dataSelecionada}`;
+          }
+        }
+
+        const response = await fetch(`${url}${params}`, {
           headers: { "x-apisports-key": API_KEY }
         });
         const dataJson = await response.json();
