@@ -23,6 +23,12 @@
       font-size: 0.9em;
       color: #555;
     }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
   </style>
 </head>
 <body>
@@ -32,18 +38,33 @@
   <div id="resultados"></div>
 
   <script>
-    const API_KEY = "af66e9e274b3b922fa0dfb97eb4a5767"; // Substitua aqui pela sua chave da API
+    const API_KEY = "SUA_CHAVE_API"; // Substitua aqui pela sua chave da API
     const BASE_URL = "https://v3.football.api-sports.io/fixtures";
+
+    // Este é o JSON que você mandou
+    const exemploJson = {
+      "obter": "classificação%C3%A7%C3%A3o",
+      "parâmetros": [],
+      "erros": {
+        "endpoint": "O endpoint Classifica%C3%A7%C3%A3o não existe."
+      },
+      "resultados": 0,
+      "paginação": {
+        "atual": 1,
+        "total": 1
+      },
+      "resposta": []
+    };
 
     document.getElementById("data").valueAsDate = new Date();
 
     async function buscarResultados() {
-      const data = document.getElementById("data").value;
+      const dataSelecionada = document.getElementById("data").value;
       const resultados = document.getElementById("resultados");
       resultados.innerHTML = "<p>Carregando...</p>";
 
       try {
-        const response = await fetch(`${BASE_URL}?date=${data}&timezone=America/Sao_Paulo`, {
+        const response = await fetch(`${BASE_URL}?date=${dataSelecionada}&timezone=America/Sao_Paulo`, {
           headers: { "x-apisports-key": API_KEY }
         });
         const dataJson = await response.json();
@@ -51,6 +72,11 @@
         resultados.innerHTML = "";
         if (dataJson.response.length === 0) {
           resultados.innerHTML = "<p>Nenhum jogo encontrado.</p>";
+
+          // Exibe o JSON de exemplo
+          const pre = document.createElement("pre");
+          pre.textContent = JSON.stringify(exemploJson, null, 2);
+          resultados.appendChild(pre);
           return;
         }
 
@@ -65,11 +91,17 @@
         });
       } catch (error) {
         resultados.innerHTML = "<p>Erro ao buscar os resultados.</p>";
+
+        // Em caso de erro na chamada, também mostra o JSON
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(exemploJson, null, 2);
+        resultados.appendChild(pre);
+
         console.error(error);
       }
     }
 
-    // Buscar automaticamente ao carregar
+    // Buscar automaticamente ao abrir a página
     buscarResultados();
   </script>
 </body>
