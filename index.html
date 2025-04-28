@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Resultados de Futebol</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    .jogo {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .jogo h3 {
+      margin: 0;
+    }
+    .status {
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Resultados de Futebol - Hoje</h1>
+  <input type="date" id="data" />
+  <button onclick="buscarResultados()">Buscar</button>
+  <div id="resultados"></div>
+
+  <script>
+    const API_KEY = "SUA_CHAVE_API"; // Substitua aqui pela sua chave da API
+    const BASE_URL = "https://v3.football.api-sports.io/fixtures";
+
+    document.getElementById("data").valueAsDate = new Date();
+
+    async function buscarResultados() {
+      const data = document.getElementById("data").value;
+      const resultados = document.getElementById("resultados");
+      resultados.innerHTML = "<p>Carregando...</p>";
+
+      try {
+        const response = await fetch(`${BASE_URL}?date=${data}&timezone=America/Sao_Paulo`, {
+          headers: { "x-apisports-key": API_KEY }
+        });
+        const dataJson = await response.json();
+
+        resultados.innerHTML = "";
+        if (dataJson.response.length === 0) {
+          resultados.innerHTML = "<p>Nenhum jogo encontrado.</p>";
+          return;
+        }
+
+        dataJson.response.forEach(jogo => {
+          const div = document.createElement("div");
+          div.className = "jogo";
+          div.innerHTML = `
+            <h3>${jogo.teams.home.name} ${jogo.goals.home} x ${jogo.goals.away} ${jogo.teams.away.name}</h3>
+            <div class="status">Status: ${jogo.fixture.status.long} (${jogo.fixture.status.short})</div>
+          `;
+          resultados.appendChild(div);
+        });
+      } catch (error) {
+        resultados.innerHTML = "<p>Erro ao buscar os resultados.</p>";
+        console.error(error);
+      }
+    }
+
+    // Buscar automaticamente ao carregar
+    buscarResultados();
+  </script>
+</body>
+</html>
